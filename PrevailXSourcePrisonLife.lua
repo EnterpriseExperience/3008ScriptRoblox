@@ -1,4 +1,4 @@
--- Prevail X ~02hacks
+if not setmetatable and not getmetatable then return warn("Unable to load Prevail X (missing setmetatable | getmetatable)") end
 
 Prevail = {
 	dev = "02hacks",
