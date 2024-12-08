@@ -162,4 +162,4 @@ scriptEvent.Event:Connect(function()
     getgenv().RBXGeneral:SendAsync("I'm using: Zacks Easy Hub.")
 end)
 
-print("Easy Access - Loaded!")
+print("Easy Access - Loaded! v2.5")
