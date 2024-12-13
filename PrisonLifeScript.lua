@@ -376,15 +376,17 @@ for i, v in ipairs(getconnections(Services.ReplicatedStorage.ReplicateEvent.OnCl
 end
 
 local LastSoundDetected = time()
-for i,v in ipairs(getconnections(Services.ReplicatedStorage.SoundEvent.OnClientEvent)) do
-   local OldFunction = v.Function
-   v.Function = function(Sound)
-       if time() - LastSoundDetected > 0.02 then
-           ToolTip.update("Audio Overload: Removing...")
-           return
-       end
-       LastSoundDetected = time()
-       OldFunction(Sound)
+for i, v in ipairs(getconnections(Services.ReplicatedStorage.SoundEvent.OnClientEvent)) do
+   if v.Function and typeof(v.Function) == "function" then
+       local OldFunction = v.Function
+       hookfunction(OldFunction, function(Sound)
+           if time() - LastSoundDetected > 0.02 then
+               ToolTip.update("Audio Overload: Removing...")
+               return
+           end
+           LastSoundDetected = time()
+           return OldFunction(Sound)
+       end)
    end
 end
 
