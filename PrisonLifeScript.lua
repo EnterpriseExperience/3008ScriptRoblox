@@ -361,15 +361,18 @@ LocalPlayer.Chatted:Connect(function(Message)
 end)
 
 local LastShotDetected = time()
-for i,v in ipairs(getconnections(Services.ReplicatedStorage.ReplicateEvent.OnClientEvent)) do
+for i, v in ipairs(getconnections(Services.ReplicatedStorage.ReplicateEvent.OnClientEvent)) do
    local OldFunction = v.Function
-   v.Function = function(BulletStats, IsTaser)
-       if #BulletStats > 25 or time() - LastShotDetected > 0.02 then
-           ToolTip.update("Bullet Overload: Removing...")
-           return
-       end
-       LastShotDetected = time()
-       OldFunction(BulletStats, IsTaser)
+   if typeof(OldFunction) == "function" then
+       v:Disable()
+       v:Connect(function(BulletStats, IsTaser)
+           if #BulletStats > 25 or time() - LastShotDetected > 0.02 then
+               ToolTip.update("Bullet Overload: Removing...")
+               return
+           end
+           LastShotDetected = time()
+           OldFunction(BulletStats, IsTaser)
+       end)
    end
 end
 
