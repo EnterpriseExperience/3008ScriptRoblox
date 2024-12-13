@@ -118,34 +118,46 @@ local function IsArmed(Player)
 end
 
 local function ClosestPlayerToCursor(Distance)
-   local Closest = nil
-   local Position = nil
-   local ShortestDistance = Distance or math.huge
+    local Closest = nil
+    local Position = nil
+    local ShortestDistance = Distance or math.huge
 
-   local MousePosition = Services.UserInputService.GetMouseLocation(Services.UserInputService)
+    local MousePosition = Services.UserInputService:GetMouseLocation()
 
-   for i, v in ipairs(Services.Players.GetPlayers(Services.Players)) do
-       if v ~= LocalPlayer and (v.Team ~= LocalPlayer.Team and tostring(v.Team) ~= Info.TeamWhitelist) and ValidCharacter(v.Character) then
-           if Info.ArmsCheckEnabled and (v.Team == Services.Teams.Inmates and IsArmed(v) == false) then
-               continue
-           end
+    for _, v in ipairs(Services.Players:GetPlayers()) do
+        if v ~= LocalPlayer 
+            and v.Team ~= LocalPlayer.Team 
+            and tostring(v.Team) ~= Info.TeamWhitelist 
+            and ValidCharacter(v.Character) then
 
-           local ViewportPosition, OnScreen = Camera.WorldToViewportPoint(Camera, v.Character.PrimaryPart.Position)
-           local Magnitude = (Vector2.new(ViewportPosition.X, ViewportPosition.Y) - MousePosition).Magnitude
+            if Info.ArmsCheckEnabled 
+                and v.Team == Services.Teams.Inmates 
+                and not IsArmed(v) then
+                continue
+            end
 
-           if OnScreen == false or NotObstructing(v.Character.PrimaryPart.Position, v.Character) == false then
-               continue
-           end
+            local Character = v.Character
+            local PrimaryPart = Character and Character.PrimaryPart
+            if not PrimaryPart then
+                continue
+            end
 
-           if Magnitude < ShortestDistance  then
-               Closest = v
-               Position = ViewportPosition
-               ShortestDistance = Magnitude
-           end
-       end
-   end
+            local ViewportPosition, OnScreen = Camera:WorldToViewportPoint(PrimaryPart.Position)
+            local Magnitude = (Vector2.new(ViewportPosition.X, ViewportPosition.Y) - MousePosition).Magnitude
 
-   return Closest, Position
+            if not OnScreen or not NotObstructing(PrimaryPart.Position, Character) then
+                continue
+            end
+
+            if Magnitude < ShortestDistance then
+                Closest = v
+                Position = ViewportPosition
+                ShortestDistance = Magnitude
+            end
+        end
+    end
+
+    return Closest, Position
 end
 
 local function SwitchGuns()
@@ -300,23 +312,20 @@ end)
 setreadonly(RawMetatable, false)
 
 RawMetatable.__index = newcclosure(function(Self, Index)
-   if Info.SilentAIMEnabled == true and checkcaller() == false then
-       if typeof(Self) == "Instance" and (Self:IsA("PlayerMouse") or Self:IsA("Mouse")) then
-           if Index == "Hit" then
-               local Closest = ClosestPlayerToCursor(Info.FieldOfView)
-               if Closest then
-                   local Velocity = Closest.Character.PrimaryPart.AssemblyLinearVelocity
-                   local Prediction = Velocity.Unit
-                   if Velocity.Magnitude == 0 then
-                       Prediction = Vector3.new(0, 0, 0)
-                   end
-                   return CFrame.new(Closest.Character.Head.Position + Prediction)
-               end
-           end
-       end
-   end
+    if Info.SilentAIMEnabled and not checkcaller() then
+        if typeof(Self) == "Instance" and (Self:IsA("PlayerMouse") or Self:IsA("Mouse")) then
+            if Index == "Hit" then
+                local Closest = ClosestPlayerToCursor(Info.FieldOfView)
+                if Closest and Closest.Character and Closest.Character:FindFirstChild("Head") and Closest.Character:FindFirstChild("PrimaryPart") then
+                    local Velocity = Closest.Character.PrimaryPart.AssemblyLinearVelocity or Vector3.zero
+                    local Prediction = Velocity.Magnitude > 0 and Velocity.Unit or Vector3.new(0, 0, 0)
+                    return CFrame.new(Closest.Character.Head.Position + Prediction)
+                end
+            end
+        end
+    end
 
-   return __Index(Self, Index)
+    return __Index(Self, Index)
 end)
 
 
