@@ -362,16 +362,15 @@ end)
 
 local LastShotDetected = time()
 for i, v in ipairs(getconnections(Services.ReplicatedStorage.ReplicateEvent.OnClientEvent)) do
-   local OldFunction = v.Function
-   if typeof(OldFunction) == "function" then
-       v:Disable()
-       v:Connect(function(BulletStats, IsTaser)
+   if v.Function and typeof(v.Function) == "function" then
+       local OldFunction = v.Function
+       hookfunction(OldFunction, function(BulletStats, IsTaser)
            if #BulletStats > 25 or time() - LastShotDetected > 0.02 then
                ToolTip.update("Bullet Overload: Removing...")
                return
            end
            LastShotDetected = time()
-           OldFunction(BulletStats, IsTaser)
+           return OldFunction(BulletStats, IsTaser)
        end)
    end
 end
